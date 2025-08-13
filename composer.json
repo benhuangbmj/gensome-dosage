@@ -1,0 +1,12 @@
+{
+    "name": "benhuangbmj/gensome-dosage",
+    "autoload": {
+        "psr-4": {
+            "Benhuangbmj\\GensomeDosage\\": "src/"
+        }
+    },
+    "require-dev": {
+        "php-stubs/wordpress-stubs": "^6.8",
+        "php-stubs/woocommerce-stubs": "^10.0"
+    }
+}
