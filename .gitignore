@@ -12,11 +12,11 @@
 Thumbs.db
 
 # Ignore IDE/editor files
-*.code-workspace
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
+# *.code-workspace
+# .vscode/
+# .idea/
+# *.sublime-project
+# *.sublime-workspace
 
 # Ignore node modules and dependencies
 node_modules/
@@ -59,65 +59,3 @@ wp-content/cache/
 *.zip
 *.tar.gz
 *.rar
-```# filepath: /home/banhuangbmj/workingProjects/gensome-dosage/.gitignore
-
-# Ignore WordPress core files
-/wp-admin/
-/wp-includes/
-
-# Ignore environment files
-.env
-.env.local
-.env.*.local
-
-# Ignore OS generated files
-.DS_Store
-Thumbs.db
-
-# Ignore IDE/editor files
-*.code-workspace
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# Ignore node modules and dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Ignore Composer dependencies
-vendor/
-composer.lock
-
-# Ignore build files
-dist/
-build/
-
-# Ignore log files and databases
-*.log
-*.sql
-*.sqlite
-
-# Ignore WordPress uploads and cache
-wp-content/uploads/
-wp-content/cache/
-
-# Ignore other temporary files
-*.tmp
-*.swp
-*.bak
-*.orig
-*.save
-
-# Ignore compiled files
-*.min.js
-*.min.css
-
-# Ignore PHPStorm specific files
-/.idea/
-
-# Ignore backup files
-*.zip
-*.tar.gz
