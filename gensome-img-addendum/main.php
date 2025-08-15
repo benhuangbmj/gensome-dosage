@@ -3,28 +3,22 @@
  * Plugin Name: Gensome Img Addendum
  */
 
-// Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Define ABSPATH if not already defined (for safety in non-WordPress environments)
-if (!defined('ABSPATH')) {
-    define('ABSPATH', dirname(__FILE__) . '/');
-}
+require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-// Hook into WooCommerce initialization to ensure its functions are available
 add_action('plugins_loaded', function () {
     if (class_exists('WooCommerce')) {
-        // Add the submenu and callback here
         add_action('admin_menu', function () {
             add_submenu_page(
-                'edit.php?post_type=product', // Parent slug for WooCommerce Products menu
-                'Product Addendum', // Page title
-                'Product Addendum', // Menu title
-                'manage_woocommerce', // Capability required
-                'product-addendum', // Menu slug
-                'product_addendum_page_callback' // Callback function
+                'edit.php?post_type=product',
+                'Product Addendum',
+                'Product Addendum',
+                'manage_woocommerce',
+                'product-addendum',
+                'product_addendum_page_callback'
             );
         });
     } else {
@@ -34,24 +28,20 @@ add_action('plugins_loaded', function () {
     }
 });
 
-// Callback function for the Product Addendum page
 function product_addendum_page_callback()
 {
     ?>
     <div class="wrap">
         <h1>Product Addendum</h1>
-        
         <?php
-        // Query all products using WooCommerce built-in function
         $args = [
-            'limit' => -1, // Get all products
-            'status' => 'publish', // Only published products
-            'orderby' => 'title', // Order by product title
-            'order' => 'ASC' // Ascending order
+            'limit' => -1,
+            'status' => 'publish',
+            'orderby' => 'title',
+            'order' => 'ASC'
         ];
 
     $products = wc_get_products($args);
-
     if (!empty($products)) {
         ?>
             <table class="wp-list-table widefat fixed striped">
@@ -101,15 +91,10 @@ function product_addendum_page_callback()
     <?php
 }
 
-// Function to create a custom database table upon plugin activation
 function gensome_addendum_create_table()
 {
     global $wpdb;
-
-    // Get the table name with the correct prefix
     $table_name = $wpdb->prefix . 'gensome_img_addendum';
-
-    // SQL to create the table if it doesn't exist
     $charset_collate = $wpdb->get_charset_collate();
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -119,11 +104,7 @@ function gensome_addendum_create_table()
         PRIMARY KEY (id),
         KEY product_id (product_id)
     ) $charset_collate;";
-
-    // Include the upgrade file and run dbDelta
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql);
 }
 
-// Hook the function to run on plugin activation
 register_activation_hook(__FILE__, 'gensome_addendum_create_table');
