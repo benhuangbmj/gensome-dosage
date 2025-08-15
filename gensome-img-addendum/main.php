@@ -14,8 +14,8 @@ add_action('plugins_loaded', function () {
         add_action('admin_menu', function () {
             add_submenu_page(
                 'edit.php?post_type=product',
-                'Product Addendum',
-                'Product Addendum',
+                __('Product Addendum', 'gensome-img-addendum'),
+                __('Product Addendum', 'gensome-img-addendum'),
                 'manage_woocommerce',
                 'product-addendum',
                 'product_addendum_page_callback'
@@ -23,7 +23,7 @@ add_action('plugins_loaded', function () {
         });
     } else {
         add_action('admin_notices', function () {
-            echo '<div class="error"><p>WooCommerce is not active. Please activate WooCommerce to use the Product Addendum feature.</p></div>';
+            echo '<div class="error"><p>' . esc_html__('WooCommerce is not active. Please activate WooCommerce to use the Product Addendum feature.', 'gensome-img-addendum') . '</p></div>';
         });
     }
 });
@@ -32,7 +32,7 @@ function product_addendum_page_callback()
 {
     ?>
     <div class="wrap">
-        <h1>Product Addendum</h1>
+        <h1><?php echo esc_html__('Product Addendum', 'gensome-img-addendum'); ?></h1>
         <?php
         $args = [
             'limit' => -1,
@@ -47,20 +47,24 @@ function product_addendum_page_callback()
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th scope="col" class="manage-column">ID</th>
-                        <th scope="col" class="manage-column">Product Name</th>
-                        <th scope="col" class="manage-column">SKU</th>
-                        <th scope="col" class="manage-column">Price</th>
-                        <th scope="col" class="manage-column">Stock Status</th>
-                        <th scope="col" class="manage-column">Actions</th>
+                        <th scope="col" class="manage-column"><?php echo esc_html__('Name', 'gensome-img-addendum'); ?></th>
+                        <th scope="col" class="manage-column"><?php echo esc_html__('Addendum Image', 'gensome-img-addendum'); ?></th>
+                        <th scope="col" class="manage-column"><?php echo esc_html__('Selected Image URL', 'gensome-img-addendum'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
                 foreach ($products as $product) {
+                    // Fetch the existing addendum post for the product
+                    $existing_post = get_posts([
+                        'post_type'   => 'addendum',
+                        'post_parent' => $product->get_id(),
+                        'numberposts' => 1,
+                    ]);
+
+                    $image_url = !empty($existing_post) ? $existing_post[0]->post_content : '';
                     ?>
                         <tr>
-                            <td><?php echo esc_html($product->get_id()); ?></td>
                             <td>
                                 <strong>
                                     <a href="<?php echo esc_url(get_edit_post_link($product->get_id())); ?>">
@@ -68,11 +72,15 @@ function product_addendum_page_callback()
                                     </a>
                                 </strong>
                             </td>
-                            <td><?php echo esc_html($product->get_sku() ?: '-'); ?></td>
-                            <td><?php echo wp_kses_post($product->get_price_html()); ?></td>
-                            <td><?php echo esc_html($product->get_stock_status()); ?></td>
                             <td>
-                                <a href="<?php echo esc_url(admin_url('post.php?post=' . $product->get_id() . '&action=edit')); ?>">Edit</a>
+                                <button class="button select-addendum" data-product-id="<?php echo esc_attr($product->get_id()); ?>">
+                                    <?php echo esc_html__('Select', 'gensome-img-addendum'); ?>
+                                </button>
+                            </td>
+                            <td>
+                                <span class="selected-image-url">
+                                    <?php echo esc_html($image_url); ?>
+                                </span>
                             </td>
                         </tr>
                         <?php
@@ -83,7 +91,7 @@ function product_addendum_page_callback()
             <?php
     } else {
         ?>
-            <p>No products found.</p>
+            <p><?php echo esc_html__('No products found.', 'gensome-img-addendum'); ?></p>
             <?php
     }
     ?>
@@ -91,20 +99,155 @@ function product_addendum_page_callback()
     <?php
 }
 
-function gensome_addendum_create_table()
-{
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'gensome_img_addendum';
-    $charset_collate = $wpdb->get_charset_collate();
-    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        product_id BIGINT(20) UNSIGNED NOT NULL,
-        addendum_text TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        PRIMARY KEY (id),
-        KEY product_id (product_id)
-    ) $charset_collate;";
-    dbDelta($sql);
-}
+add_action('admin_enqueue_scripts', function () {
+    wp_enqueue_media(); // Enqueue WordPress Media Library
+    wp_enqueue_script(
+        'gensome-img-addendum-script',
+        plugin_dir_url(__FILE__) . 'script.js',
+        ['jquery'],
+        '1.0',
+        true
+    );
 
-register_activation_hook(__FILE__, 'gensome_addendum_create_table');
+    wp_localize_script('gensome-img-addendum-script', 'gensomeImgAddendum', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('gensome_img_addendum_nonce'),
+    ]);
+});
+
+add_action('wp_ajax_save_addendum_image', function () {
+    check_ajax_referer('gensome_img_addendum_nonce', 'nonce');
+
+    $product_id = intval($_POST['product_id']);
+    $image_url  = esc_url_raw($_POST['image_url']);
+
+    if (!$product_id || !$image_url) {
+        wp_send_json_error(['message' => __('Invalid data.', 'gensome-img-addendum')]);
+    }
+
+    // Check if an addendum post already exists for this product
+    $existing_post = get_posts([
+        'post_type'   => 'addendum',
+        'post_parent' => $product_id,
+        'numberposts' => 1,
+    ]);
+
+    if (!empty($existing_post)) {
+        // Update the existing addendum post
+        $post_id = $existing_post[0]->ID;
+        wp_update_post([
+            'ID'           => $post_id,
+            'post_content' => $image_url,
+        ]);
+    } else {
+        // Insert a new addendum post
+        $post_id = wp_insert_post([
+            'post_type'    => 'addendum',
+            'post_title'   => 'Addendum for Product ' . $product_id,
+            'post_content' => $image_url,
+            'post_status'  => 'publish',
+            'post_parent'  => $product_id,
+        ]);
+    }
+
+    if ($post_id) {
+        wp_send_json_success(['message' => __('Addendum saved successfully.', 'gensome-img-addendum')]);
+    } else {
+        wp_send_json_error(['message' => __('Failed to save addendum.', 'gensome-img-addendum')]);
+    }
+});
+
+add_action('woocommerce_before_single_product_summary', function () {
+    global $post;
+
+    // Check if the current product has an addendum post
+    $addendum_post = get_posts([
+        'post_type'   => 'addendum',
+        'post_parent' => $post->ID,
+        'numberposts' => 1,
+    ]);
+
+    if (!empty($addendum_post)) {
+        $addendum_image_url = esc_url($addendum_post[0]->post_content);
+
+        if ($addendum_image_url) {
+            ?>
+            <style>
+                .product-image-wrapper {
+                    position: relative;
+                }
+
+                .addendum-image-overlay {
+                    position: absolute;
+                    bottom: 5%;
+                    right: 5%;
+                    width: 20%; /* Takes up 1/5 of the display area */
+                    z-index: 10;
+                    border: 2px solid #fff;
+                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                }
+            </style>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const productImageWrapper = document.querySelector('.woocommerce-product-gallery');
+                    if (productImageWrapper) {
+                        productImageWrapper.classList.add('product-image-wrapper');
+                    }
+                });
+            </script>
+            <img src="<?php echo $addendum_image_url; ?>" alt="Addendum Image" class="addendum-image-overlay">
+            <?php
+        }
+    }
+});
+
+add_action('woocommerce_before_shop_loop_item_title', function () {
+    global $product;
+
+    // Check if the current product has an addendum post
+    $addendum_post = get_posts([
+        'post_type'   => 'addendum',
+        'post_parent' => $product->get_id(),
+        'numberposts' => 1,
+    ]);
+
+    if (!empty($addendum_post)) {
+        $addendum_image_url = esc_url($addendum_post[0]->post_content);
+
+        if ($addendum_image_url) {
+            ?>
+            <style>
+                .product-list-image-wrapper {
+                    position: relative; /* Ensure the parent container is positioned */
+                }
+
+                .product-list-image-wrapper img {
+                    display: block; /* Ensure the main product image is displayed properly */
+                }
+
+                .addendum-image-overlay {
+                    position: absolute;
+                    bottom: 5%; /* Position at the lower right corner */
+                    right: 5%;
+                    width: 20%; /* Takes up 1/5 of the display area */
+                    z-index: 10;
+                    border: 2px solid #fff;
+                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                }
+            </style>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const productImageWrappers = document.querySelectorAll('.woocommerce-LoopProduct-link img');
+                    productImageWrappers.forEach(function (image) {
+                        const wrapper = image.closest('.product');
+                        if (wrapper) {
+                            wrapper.classList.add('product-list-image-wrapper');
+                        }
+                    });
+                });
+            </script>
+            <img src="<?php echo $addendum_image_url; ?>" alt="Addendum Image" class="addendum-image-overlay">
+            <?php
+        }
+    }
+});
