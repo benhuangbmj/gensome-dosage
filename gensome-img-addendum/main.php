@@ -226,22 +226,59 @@ add_action('woocommerce_before_shop_loop_item_title', function () {
                 }
 
                 .addendum-image-overlay {
-                    position: absolute;
-                    bottom: 5%; /* Position at the lower right corner */
-                    right: 5%;
-                    width: 20%; /* Takes up 1/5 of the display area */
                     z-index: 10;
                     border: 2px solid #fff;
                     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                    width: 50% !important;
                 }
             </style>
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
-                    const productImageWrappers = document.querySelectorAll('.woocommerce-LoopProduct-link img');
+                    const productImageWrappers = document.querySelectorAll('.woocommerce-LoopProduct-link img.attachment-woocommerce_thumbnail');
+
                     productImageWrappers.forEach(function (image) {
-                        const wrapper = image.closest('.product');
-                        if (wrapper) {
-                            wrapper.classList.add('product-list-image-wrapper');
+                        const topPercentage = 0.7;
+                        const widthPercentage = 0.6;
+                        // Wait for the image to load to ensure dimensions are available
+                        image.addEventListener('load', function () {
+                            const wrapper = image.closest('.product');
+                            if (wrapper) {
+                                wrapper.classList.add('product-list-image-wrapper');
+
+                                // Find the addendum image overlay
+                                const addendumImage = wrapper.querySelector('.addendum-image-overlay');
+                                if (addendumImage) {
+                                    // Get the dimensions of the product image
+                                    const imageWidth = image.offsetWidth;
+                                    const imageHeight = image.offsetHeight;
+
+                                    // Set the position of the addendum image
+                                    addendumImage.style.position = 'absolute';
+                                    addendumImage.style.top = `${imageHeight * topPercentage}px`; // 60% of the product image height
+                                    addendumImage.style.left = `${imageWidth * widthPercentage}px`; // 60% of the product image width
+                                    console.log(addendumImage.style.top, "top");
+                                }
+                            }
+                        });
+
+                        // If the image is already loaded (e.g., cached), calculate immediately
+                        if (image.complete) {
+                            const wrapper = image.closest('.product');
+                            if (wrapper) {
+                                wrapper.classList.add('product-list-image-wrapper');
+
+                                const addendumImage = wrapper.querySelector('.addendum-image-overlay');
+                                if (addendumImage) {
+                                    const imageWidth = image.offsetWidth;
+                                    const imageHeight = image.offsetHeight;
+
+
+                                    addendumImage.style.position = 'absolute';
+                                    addendumImage.style.top = `${imageHeight * topPercentage}px`;
+                                    addendumImage.style.left = `${imageWidth * widthPercentage}px`;
+                                    console.log(addendumImage.style.top, "top");
+                                }
+                            }
                         }
                     });
                 });
@@ -250,4 +287,4 @@ add_action('woocommerce_before_shop_loop_item_title', function () {
             <?php
         }
     }
-});
+}, 999);
