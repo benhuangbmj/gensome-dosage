@@ -55,7 +55,6 @@ function product_addendum_page_callback()
                 <tbody>
                     <?php
                 foreach ($products as $product) {
-                    // Fetch the existing addendum post for the product
                     $existing_post = get_posts([
                         'post_type'   => 'addendum',
                         'post_parent' => $product->get_id(),
@@ -100,7 +99,7 @@ function product_addendum_page_callback()
 }
 
 add_action('admin_enqueue_scripts', function () {
-    wp_enqueue_media(); // Enqueue WordPress Media Library
+    wp_enqueue_media();
     wp_enqueue_script(
         'gensome-img-addendum-script',
         plugin_dir_url(__FILE__) . 'script.js',
@@ -125,7 +124,6 @@ add_action('wp_ajax_save_addendum_image', function () {
         wp_send_json_error(['message' => __('Invalid data.', 'gensome-img-addendum')]);
     }
 
-    // Check if an addendum post already exists for this product
     $existing_post = get_posts([
         'post_type'   => 'addendum',
         'post_parent' => $product_id,
@@ -133,14 +131,12 @@ add_action('wp_ajax_save_addendum_image', function () {
     ]);
 
     if (!empty($existing_post)) {
-        // Update the existing addendum post
         $post_id = $existing_post[0]->ID;
         wp_update_post([
             'ID'           => $post_id,
             'post_content' => $image_url,
         ]);
     } else {
-        // Insert a new addendum post
         $post_id = wp_insert_post([
             'post_type'    => 'addendum',
             'post_title'   => 'Addendum for Product ' . $product_id,
@@ -160,7 +156,6 @@ add_action('wp_ajax_save_addendum_image', function () {
 add_action('woocommerce_before_single_product_summary', function () {
     global $post;
 
-    // Check if the current product has an addendum post
     $addendum_post = get_posts([
         'post_type'   => 'addendum',
         'post_parent' => $post->ID,
@@ -181,7 +176,7 @@ add_action('woocommerce_before_single_product_summary', function () {
                     position: absolute;
                     bottom: 5%;
                     right: 5%;
-                    width: 20%; /* Takes up 1/5 of the display area */
+                    width: 20%;
                     z-index: 10;
                     border: 2px solid #fff;
                     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -204,7 +199,6 @@ add_action('woocommerce_before_single_product_summary', function () {
 add_action('woocommerce_before_shop_loop_item_title', function () {
     global $product;
 
-    // Check if the current product has an addendum post
     $addendum_post = get_posts([
         'post_type'   => 'addendum',
         'post_parent' => $product->get_id(),
@@ -218,11 +212,11 @@ add_action('woocommerce_before_shop_loop_item_title', function () {
             ?>
             <style>
                 .product-list-image-wrapper {
-                    position: relative; /* Ensure the parent container is positioned */
+                    position: relative;
                 }
 
                 .product-list-image-wrapper img {
-                    display: block; /* Ensure the main product image is displayed properly */
+                    display: block;
                 }
 
                 .addendum-image-overlay {
@@ -239,29 +233,24 @@ add_action('woocommerce_before_shop_loop_item_title', function () {
                     productImageWrappers.forEach(function (image) {
                         const topPercentage = 0.7;
                         const widthPercentage = 0.6;
-                        // Wait for the image to load to ensure dimensions are available
                         image.addEventListener('load', function () {
                             const wrapper = image.closest('.product');
                             if (wrapper) {
                                 wrapper.classList.add('product-list-image-wrapper');
 
-                                // Find the addendum image overlay
                                 const addendumImage = wrapper.querySelector('.addendum-image-overlay');
                                 if (addendumImage) {
-                                    // Get the dimensions of the product image
                                     const imageWidth = image.offsetWidth;
                                     const imageHeight = image.offsetHeight;
 
-                                    // Set the position of the addendum image
                                     addendumImage.style.position = 'absolute';
-                                    addendumImage.style.top = `${imageHeight * topPercentage}px`; // 60% of the product image height
-                                    addendumImage.style.left = `${imageWidth * widthPercentage}px`; // 60% of the product image width
+                                    addendumImage.style.top = `${imageHeight * topPercentage}px`;
+                                    addendumImage.style.left = `${imageWidth * widthPercentage}px`;
                                     console.log(addendumImage.style.top, "top");
                                 }
                             }
                         });
 
-                        // If the image is already loaded (e.g., cached), calculate immediately
                         if (image.complete) {
                             const wrapper = image.closest('.product');
                             if (wrapper) {
@@ -287,4 +276,4 @@ add_action('woocommerce_before_shop_loop_item_title', function () {
             <?php
         }
     }
-}, 999);
+});
