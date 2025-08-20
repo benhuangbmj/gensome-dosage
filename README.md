@@ -1,22 +1,22 @@
-# Gensome Img Addendum
+# Gensome Dosage
 
-A WordPress plugin to manage and display addendum images for WooCommerce products.
+A collection of WordPress plugins built to support my online business. This repo currently contains the first plugin in the series: **Gensome Img Addendum**.
 
-## Features
-- Add or update addendum images via the admin panel.
-- Display addendum images dynamically:
-  - **Single Product Page**: Positioned at the lower-right corner (20% of the product image size).
-  - **Product List**: Positioned dynamically at 60% height and width of the product image.
-- Integrates with the WordPress Media Library for image selection.
-- AJAX support for saving addendum images.
+**Work in progress — ongoing development. Features and APIs may change.**
 
-## Installation
-1. Clone the repository into `wp-content/plugins`:
-   ```bash
-   git clone https://github.com/your-repo-url/gensome-dosage.git
-   ```
-2. Activate the plugin in the WordPress admin panel.
-3. Ensure WooCommerce is installed and active.
+## About Gensome Img Addendum
+Adds "addendum" images to WooCommerce product images. Use it to attach small overlay images (e.g., badges or supplemental graphics) to product thumbnails and single product images.
+
+## Key points
+- Admin UI to select addendum images from the Media Library.
+- Stores addendum images as custom posts (`addendum`) linked to products.
+- Displays overlays on single product pages and product lists.
+- AJAX-powered saving; integrates with WooCommerce.
+
+## Quick install
+1. Copy this repo to `wp-content/plugins`.
+2. Activate the plugin in WordPress.
+3. Ensure WooCommerce is active.
 
 ## License
-MIT License
+MIT
